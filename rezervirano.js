@@ -1,2 +1,2 @@
 // Upiši brojeve drvaca koje su kolege odabrali, npr: [37, 12, 5]
-window.REZERVIRANI = [33, 35, 37];
+window.REZERVIRANI = [];
