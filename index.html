@@ -111,7 +111,7 @@ Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js'), 
   const slobodni = svi.filter(n => !rez.includes(n));
 
   document.getElementById('brojac').textContent =
-    
+    `Slobodno još ${slobodni.length} od ${svi.length} drvaca`;
   if (!slobodni.length) document.getElementById('prazno').style.display = 'block';
 
   const slikaEl = (src, n, i) => {
