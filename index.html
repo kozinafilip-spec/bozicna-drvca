@@ -12,7 +12,10 @@
   header h1 { margin:0 0 6px; font-size:1.5rem; }
   header p { margin:0; opacity:.9; font-size:.95rem; }
   #brojac { margin:14px 16px 0; text-align:center; font-weight:600; }
-  #mreza { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; padding:16px; max-width:1100px; margin:0 auto; }
+  #info { width:calc(100% - 32px); max-width:1068px; margin:14px auto 0; padding:12px 16px; background:#fff; border-left:5px solid var(--zelena); border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.12); line-height:1.6; display:none; }
+  #info a { color:var(--zelena); font-weight:700; text-decoration:none; white-space:nowrap; }
+  .sekcija h2 { max-width:1100px; margin:26px auto 0; padding:0 16px; font-size:1.3rem; color:var(--zelena); border-bottom:2px solid #c3d5c5; }
+  .mreza { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; padding:16px; max-width:1100px; margin:0 auto; }
   .kartica { background:#fff; border-radius:10px; overflow:hidden; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15); }
   .kartica .slika { aspect-ratio:3/4; background:#cfdccf; display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:#5d7a63; }
   .kartica img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -37,8 +40,9 @@
   <h1>🎄 Božićna drvca</h1>
   <p>Klikni na drvce da vidiš sve slike. Sviđa ti se? Javi mi broj na Teamsu.</p>
 </header>
+<div id="info"></div>
 <div id="brojac"></div>
-<div id="mreza"></div>
+<div id="sekcije"></div>
 <p id="prazno">Sva drvca su već rezervirana. 🎄</p>
 
 <div id="overlay">
@@ -61,9 +65,29 @@ function ucitaj(src) {
   });
 }
 
-Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js')]).then(() => {
+Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js'), ucitaj('postavke.js')]).then(() => {
   const borovi = window.BOROVI || {};
   const podaci = window.PODACI || {};
+  const postavke = window.POSTAVKE || {};
+
+  // Info okvir: dostava i telefon (retci bez podatka se preskaču).
+  const info = document.getElementById('info');
+  const dodajRedak = (emoji, tekst, telefon) => {
+    const r = document.createElement('div');
+    r.append(`${emoji} ${tekst}`);
+    if (telefon) {
+      const a = document.createElement('a');
+      a.href = 'tel:' + telefon.replace(/[^\d+]/g, '');
+      a.textContent = telefon;
+      r.append(' ', a);
+    }
+    info.appendChild(r);
+  };
+  if (!prazno0(postavke.dostava)) dodajRedak('🚚', `Drvca dostavljam ${postavke.dostava}`);
+  if (!prazno0(postavke.telefon)) dodajRedak('📞', 'Za sva pitanja slobodno me nazovi na broj', postavke.telefon);
+  if (info.children.length) info.style.display = 'block';
+
+  function prazno0(v) { return v === undefined || v === null || String(v).trim() === ''; }
 
   // Broj dobije jedinicu (180 -> "180 cm"), a tekst ostaje kakav je ("oko 2 m").
   const jeBroj = v => typeof v === 'number' || (typeof v === 'string' && /^\s*\d+([.,]\d+)?\s*$/.test(v));
@@ -101,8 +125,26 @@ Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js')])
     return wrap;
   };
 
-  const mreza = document.getElementById('mreza');
-  slobodni.forEach(n => {
+  // Rezani borići su svi do broja "kopaniOd" (iz postavke.js), kopani od tog broja nadalje.
+  const kopaniOd = prazno0(postavke.kopaniOd) ? Infinity : Number(postavke.kopaniOd);
+  const sekcije = document.getElementById('sekcije');
+  [
+    { naslov: 'Rezani borići', popis: slobodni.filter(n => n < kopaniOd) },
+    { naslov: 'Kopani borići', popis: slobodni.filter(n => n >= kopaniOd) },
+  ].forEach(sek => {
+    if (!sek.popis.length) return;
+    const wrap = document.createElement('section');
+    wrap.className = 'sekcija';
+    const h = document.createElement('h2');
+    h.textContent = sek.naslov;
+    const mreza = document.createElement('div');
+    mreza.className = 'mreza';
+    wrap.append(h, mreza);
+    sekcije.appendChild(wrap);
+    sek.popis.forEach(n => dodajKarticu(n, mreza));
+  });
+
+  function dodajKarticu(n, mreza) {
     const k = document.createElement('div');
     k.className = 'kartica';
     const b = document.createElement('div');
@@ -118,7 +160,7 @@ Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js')])
     }
     k.onclick = () => otvori(n);
     mreza.appendChild(k);
-  });
+  }
 
   const overlay = document.getElementById('overlay');
   function otvori(n) {
