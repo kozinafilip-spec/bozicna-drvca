@@ -1,4 +1,5 @@
 // Upiši brojeve drvaca koje su kolege odabrali, npr: [37, 12, 5]
 // 15- Damir Sever
 // 8- Marko čampa
-window.REZERVIRANI = [8, 15];
+// 5- Vedran
+window.REZERVIRANI = [5, 8, 15];
