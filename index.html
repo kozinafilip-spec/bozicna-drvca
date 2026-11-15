@@ -41,7 +41,6 @@
   <p>Klikni na drvce da vidiš sve slike. Sviđa ti se? Javi mi broj na Teamsu.</p>
 </header>
 <div id="info"></div>
-<div id="brojac"></div>
 <div id="sekcije"></div>
 <p id="prazno">Sva drvca su već rezervirana. 🎄</p>
 
@@ -65,9 +64,16 @@ function ucitaj(src) {
   });
 }
 
-Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js'), ucitaj('postavke.js')]).then(() => {
-  const borovi = window.BOROVI || {};
-  const podaci = window.PODACI || {};
+Promise.all([
+  ucitaj('popis.js'), ucitaj('popis-kopani.js'),
+  ucitaj('rezervirano.js'),
+  ucitaj('podaci.js'), ucitaj('podaci-kopani.js'),
+  ucitaj('postavke.js'),
+]).then(() => {
+  // Rezani (popis.js, podaci.js) i kopani (popis-kopani.js, podaci-kopani.js) su odvojene datoteke.
+  const borovi = Object.assign({}, window.BOROVI, window.BOROVI_KOPANI);
+  const podaci = Object.assign({}, window.PODACI, window.PODACI_KOPANI);
+  const kopaniBrojevi = new Set(Object.keys(window.BOROVI_KOPANI || {}).map(Number));
   const postavke = window.POSTAVKE || {};
 
   // Info okvir: dostava i telefon (retci bez podatka se preskaču).
@@ -110,8 +116,6 @@ Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js'), 
   const svi = Object.keys(borovi).map(Number).sort((a, b) => a - b);
   const slobodni = svi.filter(n => !rez.includes(n));
 
-  document.getElementById('brojac').textContent =
-    `Slobodno još ${slobodni.length} od ${svi.length} drvaca`;
   if (!slobodni.length) document.getElementById('prazno').style.display = 'block';
 
   const slikaEl = (src, n, i) => {
@@ -125,12 +129,13 @@ Promise.all([ucitaj('popis.js'), ucitaj('rezervirano.js'), ucitaj('podaci.js'), 
     return wrap;
   };
 
-  // Rezani borići su svi do broja "kopaniOd" (iz postavke.js), kopani od tog broja nadalje.
+  // Kopani su drvca iz popis-kopani.js (a po želji i svi od broja "kopaniOd" iz postavke.js).
   const kopaniOd = prazno0(postavke.kopaniOd) ? Infinity : Number(postavke.kopaniOd);
+  const jeKopani = n => kopaniBrojevi.has(n) || n >= kopaniOd;
   const sekcije = document.getElementById('sekcije');
   [
-    { naslov: 'Rezani borići', popis: slobodni.filter(n => n < kopaniOd) },
-    { naslov: 'Kopani borići', popis: slobodni.filter(n => n >= kopaniOd) },
+    { naslov: 'Rezani borići', popis: slobodni.filter(n => !jeKopani(n)) },
+    { naslov: 'Kopani borići', popis: slobodni.filter(n => jeKopani(n)) },
   ].forEach(sek => {
     if (!sek.popis.length) return;
     const wrap = document.createElement('section');
