@@ -2,4 +2,4 @@
 // 15- Damir Sever
 // 8- Marko čampa
 // 5- Vedran
-window.REZERVIRANI = [5, 8, 15, 57, 58, 60];
+window.REZERVIRANI = [5, 8, 15, 28, 57, 58, 60];
